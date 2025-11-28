@@ -1,0 +1,26 @@
+{
+  "name": "blog-system",
+  "version": "1.0.0",
+  "description": "Vue3 + Node.js Blog System",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "lint": "eslint frontend backend",
+    "lint:fix": "eslint frontend backend --fix",
+    "lint:frontend": "eslint frontend",
+    "lint:backend": "eslint backend"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "eslint-plugin-vue": "^10.6.1",
+    "globals": "^16.5.0"
+  }
+}
