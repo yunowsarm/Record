@@ -16,9 +16,7 @@
                 <el-icon class="value-icon"><Document /></el-icon>
                 <span>{{ stats.totalArticles }}</span>
               </div>
-              <div class="stat-uptime">
-                分类: {{ stats.totalCategories }} 个
-              </div>
+              <div class="stat-uptime">分类: {{ stats.totalCategories }} 个</div>
             </div>
             <div class="stat-card-item">
               <div class="stat-label">总阅读量</div>
@@ -78,22 +76,12 @@
           <span>阅读量统计</span>
         </div>
         <div class="chart-controls">
-          <el-select
-            v-model="chartDays"
-            style="width: 120px"
-            size="small"
-            @change="loadChartData"
-          >
+          <el-select v-model="chartDays" style="width: 120px" size="small" @change="loadChartData">
             <el-option label="最近7天" :value="7" />
             <el-option label="最近30天" :value="30" />
             <el-option label="最近90天" :value="90" />
           </el-select>
-          <el-button
-            text
-            size="small"
-            @click="loadChartData"
-            class="refresh-btn"
-          >
+          <el-button text size="small" @click="loadChartData" class="refresh-btn">
             <el-icon><Refresh /></el-icon>
             <span>刷新</span>
           </el-button>
@@ -148,7 +136,18 @@
             @click="$router.push(`/articles/${article._id}`)"
           >
             <div class="article-card-header">
-              <h3 class="article-card-title">{{ article.title }}</h3>
+              <el-tooltip
+                v-if="article.title && article.title.length > 28"
+                :content="article.title"
+                placement="top"
+              >
+                <h3 class="article-card-title">
+                  {{ article.title.slice(0, 28) + '...' }}
+                </h3>
+              </el-tooltip>
+              <h3 v-else class="article-card-title">
+                {{ article.title }}
+              </h3>
               <el-tag v-if="article.category" size="small" type="info">
                 {{ article.category.name }}
               </el-tag>
@@ -156,7 +155,7 @@
             <div class="article-card-meta">
               <span class="author">
                 <el-icon><User /></el-icon>
-                {{ article.author?.username || "未知" }}
+                {{ article.author?.username || '未知' }}
               </span>
               <span class="date">
                 <el-icon><Calendar /></el-icon>
@@ -176,8 +175,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   Document,
   View,
@@ -189,15 +188,15 @@ import {
   Clock,
   User,
   Calendar,
-} from "@element-plus/icons-vue";
-import * as echarts from "echarts";
-import { getArticles, getArticleStats } from "../api/article";
-import { getCategories } from "../api/category";
-import { getTags } from "../api/tag";
-import { useUserStore } from "../stores/user";
+} from '@element-plus/icons-vue'
+import * as echarts from 'echarts'
+import { getArticles, getArticleStats } from '../api/article'
+import { getCategories } from '../api/category'
+import { getTags } from '../api/tag'
+import { useUserStore } from '../stores/user'
 
-const router = useRouter();
-const userStore = useUserStore();
+const router = useRouter()
+const userStore = useUserStore()
 
 // 统计数据
 const stats = ref({
@@ -205,18 +204,18 @@ const stats = ref({
   totalViews: 0,
   totalCategories: 0,
   totalTags: 0,
-});
+})
 
 // 图表相关
-const chartLoading = ref(false);
-const chartDays = ref(30);
-const chartData = ref([]);
-const chartContainer = ref(null);
-let chartInstance = null;
+const chartLoading = ref(false)
+const chartDays = ref(30)
+const chartData = ref([])
+const chartContainer = ref(null)
+let chartInstance = null
 
 // 最近文章
-const articlesLoading = ref(false);
-const recentArticles = ref([]);
+const articlesLoading = ref(false)
+const recentArticles = ref([])
 
 // 加载统计数据
 const loadStats = async () => {
@@ -225,107 +224,102 @@ const loadStats = async () => {
     const articlesResponse = await getArticles({
       page: 1,
       limit: 1,
-      status: "published",
-    });
-    stats.value.totalArticles = articlesResponse.pagination?.total || 0;
+      status: 'published',
+    })
+    stats.value.totalArticles = articlesResponse.pagination?.total || 0
 
     // 计算总阅读量
     const allArticlesResponse = await getArticles({
       page: 1,
       limit: 1000,
-      status: "published",
-    });
+      status: 'published',
+    })
     stats.value.totalViews =
-      allArticlesResponse.articles?.reduce(
-        (sum, article) => sum + (article.views || 0),
-        0
-      ) || 0;
+      allArticlesResponse.articles?.reduce((sum, article) => sum + (article.views || 0), 0) || 0
 
     // 加载分类和标签
-    const categories = await getCategories();
-    stats.value.totalCategories = categories?.length || 0;
+    const categories = await getCategories()
+    stats.value.totalCategories = categories?.length || 0
 
-    const tags = await getTags();
-    stats.value.totalTags = tags?.length || 0;
+    const tags = await getTags()
+    stats.value.totalTags = tags?.length || 0
   } catch (error) {
-    console.error("加载统计数据失败:", error);
+    console.error('加载统计数据失败:', error)
   }
-};
+}
 
 // 加载图表数据
 const loadChartData = async () => {
   if (!userStore.isLoggedIn) {
-    chartData.value = [];
-    return;
+    chartData.value = []
+    return
   }
 
-  chartLoading.value = true;
+  chartLoading.value = true
   try {
-    const response = await getArticleStats({ days: chartDays.value });
+    const response = await getArticleStats({ days: chartDays.value })
     if (response && response.trends) {
       chartData.value = response.trends.map((item) => ({
         date: item._id,
         views: item.totalViews || 0,
         count: item.articleCount || 0,
-      }));
+      }))
 
-      await nextTick();
+      await nextTick()
       if (chartContainer.value && chartData.value.length > 0) {
-        renderChart();
+        renderChart()
       }
     }
   } catch (error) {
-    console.error("加载图表数据失败:", error);
-    chartData.value = [];
+    console.error('加载图表数据失败:', error)
+    chartData.value = []
   } finally {
-    chartLoading.value = false;
+    chartLoading.value = false
   }
-};
+}
 
 // 渲染图表
 const renderChart = () => {
-  if (!chartContainer.value) return;
+  if (!chartContainer.value) return
 
   // 销毁旧图表
   if (chartInstance) {
-    chartInstance.dispose();
+    chartInstance.dispose()
   }
 
   // 创建新图表
-  chartInstance = echarts.init(chartContainer.value);
+  chartInstance = echarts.init(chartContainer.value)
 
   // 准备数据
   const dates = chartData.value.map((item) => {
-    const date = new Date(item.date);
-    return `${date.getMonth() + 1}/${date.getDate()}`;
-  });
-  const views = chartData.value.map((item) => item.views);
-  const counts = chartData.value.map((item) => item.count);
+    const date = new Date(item.date)
+    return `${date.getMonth() + 1}/${date.getDate()}`
+  })
+  const views = chartData.value.map((item) => item.views)
+  const counts = chartData.value.map((item) => item.count)
   const avgViews =
-    counts.length > 0
-      ? views.map((v, i) => (counts[i] > 0 ? (v / counts[i]).toFixed(1) : 0))
-      : [];
+    counts.length > 0 ? views.map((v, i) => (counts[i] > 0 ? (v / counts[i]).toFixed(1) : 0)) : []
 
   // 配置选项
   const option = {
     tooltip: {
-      trigger: "axis",
+      trigger: 'axis',
       axisPointer: {
-        type: "cross",
+        type: 'cross',
       },
     },
     legend: {
-      data: ["总阅读量", "文章数量", "平均阅读量"],
+      data: ['总阅读量', '文章数量', '平均阅读量'],
       bottom: 0,
     },
     grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "15%",
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
       containLabel: true,
     },
     xAxis: {
-      type: "category",
+      type: 'category',
       boundaryGap: false,
       data: dates,
       axisLabel: {
@@ -334,28 +328,28 @@ const renderChart = () => {
     },
     yAxis: [
       {
-        type: "value",
-        name: "阅读量/数量",
-        position: "left",
+        type: 'value',
+        name: '阅读量/数量',
+        position: 'left',
       },
       {
-        type: "value",
-        name: "平均阅读量",
-        position: "right",
+        type: 'value',
+        name: '平均阅读量',
+        position: 'right',
       },
     ],
     series: [
       {
-        name: "总阅读量",
-        type: "line",
+        name: '总阅读量',
+        type: 'line',
         smooth: true,
         data: views,
         itemStyle: {
-          color: "#409eff",
+          color: '#409eff',
         },
         areaStyle: {
           color: {
-            type: "linear",
+            type: 'linear',
             x: 0,
             y: 0,
             x2: 0,
@@ -363,82 +357,82 @@ const renderChart = () => {
             colorStops: [
               {
                 offset: 0,
-                color: "rgba(64, 158, 255, 0.3)",
+                color: 'rgba(64, 158, 255, 0.3)',
               },
               {
                 offset: 1,
-                color: "rgba(64, 158, 255, 0.1)",
+                color: 'rgba(64, 158, 255, 0.1)',
               },
             ],
           },
         },
       },
       {
-        name: "文章数量",
-        type: "bar",
+        name: '文章数量',
+        type: 'bar',
         data: counts,
         itemStyle: {
-          color: "#67c23a",
+          color: '#67c23a',
         },
       },
       {
-        name: "平均阅读量",
-        type: "line",
+        name: '平均阅读量',
+        type: 'line',
         smooth: true,
         yAxisIndex: 1,
         data: avgViews,
         itemStyle: {
-          color: "#e6a23c",
+          color: '#e6a23c',
         },
       },
     ],
-  };
+  }
 
-  chartInstance.setOption(option);
+  chartInstance.setOption(option)
 
   // 响应式调整
-  window.addEventListener("resize", () => {
+  window.addEventListener('resize', () => {
     if (chartInstance) {
-      chartInstance.resize();
+      chartInstance.resize()
     }
-  });
-};
+  })
+}
 
 // 加载最近文章
 const loadRecentArticles = async () => {
-  articlesLoading.value = true;
+  articlesLoading.value = true
   try {
     const response = await getArticles({
       page: 1,
       limit: 6,
-      status: "published",
-    });
-    recentArticles.value = response.articles || [];
+      status: 'published',
+    })
+    recentArticles.value = response.articles || []
   } catch (error) {
-    console.error("加载最近文章失败:", error);
+    console.error('加载最近文章失败:', error)
   } finally {
-    articlesLoading.value = false;
+    articlesLoading.value = false
   }
-};
+}
 
 // 格式化日期
 const formatDate = (date) => {
-  if (!date) return "";
-  const d = new Date(date);
-  const year = d.getFullYear();
-  const month = d.getMonth() + 1;
-  const day = d.getDate();
-  return `${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
-};
+  if (!date) return ''
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = d.getMonth() + 1
+  const day = d.getDate()
+  return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
+}
 
 onMounted(async () => {
-  await loadStats();
-  await loadRecentArticles();
-  await loadChartData();
-});
+  await loadStats()
+  await loadRecentArticles()
+  await loadChartData()
+})
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .dashboard {
   max-width: 1400px;
   margin: 0 auto;
@@ -719,6 +713,7 @@ onMounted(async () => {
 .article-card-title {
   flex: 1;
   margin: 0;
+  height: 48px;
   font-size: 16px;
   font-weight: 600;
   color: #303133;
