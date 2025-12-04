@@ -9,16 +9,11 @@
           <el-card v-if="article">
             <div class="article-header">
               <div style="display: flex; justify-content: space-between; align-items: center">
-                <h1>{{ article.title }}</h1>
+                <h1 style="max-width: 890px">{{ article.title }}</h1>
                 <div class="article-actions">
-                  <div v-if="canEdit">
-                    <el-button @click="handleEdit">编辑</el-button>
-                    <el-button type="danger" @click="handleDelete">删除</el-button>
-                  </div>
-
-                  <div>
-                    <el-button type="primary" @click="handleBack">返回</el-button>
-                  </div>
+                  <el-button v-if="canEdit" @click="handleEdit">编辑</el-button>
+                  <el-button v-if="canEdit" type="danger" @click="handleDelete">删除</el-button>
+                  <el-button type="primary" @click="handleBack">返回</el-button>
                 </div>
               </div>
 
@@ -243,10 +238,13 @@ onMounted(() => {
 }
 
 .article-actions {
-  margin-top: 15px;
+  margin-top: 10px;
   display: flex;
-  gap: 10px;
+  justify-content: flex-end;
   align-items: center;
+  gap: 10px;
+  min-width: 220px;
+  align-self: flex-start;
 }
 
 .article-cover {

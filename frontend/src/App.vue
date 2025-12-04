@@ -13,10 +13,10 @@
 
 body {
   font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   /* 隐藏滚动条但保持滚动功能 */
   overflow-x: hidden;
+  background-color: #fff;
 }
 
 /* 隐藏 body 滚动条 - 兼容所有浏览器 */

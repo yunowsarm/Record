@@ -258,12 +258,8 @@ const loadChartData = async () => {
   chartLoading.value = true
   try {
     const response = await getArticleStats({ days: chartDays.value })
-    if (response && response.trends) {
-      chartData.value = response.trends.map((item) => ({
-        date: item._id,
-        views: item.totalViews || 0,
-        count: item.articleCount || 0,
-      }))
+    if (response && response.stats) {
+      chartData.value = response.stats
 
       await nextTick()
       if (chartContainer.value && chartData.value.length > 0) {
@@ -404,7 +400,7 @@ const loadRecentArticles = async () => {
   try {
     const response = await getArticles({
       page: 1,
-      limit: 6,
+      limit: 8,
       status: 'published',
     })
     recentArticles.value = response.articles || []
