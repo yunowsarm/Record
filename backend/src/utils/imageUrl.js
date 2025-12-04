@@ -52,13 +52,18 @@ export const getFullImageUrl = (req, relativePath) => {
 
     // 如果后端运行在 localhost:3000，且请求来自 localhost，返回相对路径
     // 这样 Vite 代理可以处理请求
-    if (host.includes('localhost') && (host.includes(':3000') || host === 'localhost')) {
+    if (host && host.includes('localhost') && (host.includes(':3000') || host === 'localhost')) {
       // 在开发环境中，如果检测到本地请求，默认返回相对路径
       return path
     }
   }
 
   // 生产环境或直接访问后端时，返回完整 URL
+  // 如果 host 为空，无法构建完整 URL，返回相对路径作为后备方案
+  if (!host || host.trim() === '') {
+    return path
+  }
+
   // 获取协议（支持反向代理）
   const protocol = req.headers['x-forwarded-proto'] || req.protocol
 
