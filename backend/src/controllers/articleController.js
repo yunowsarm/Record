@@ -1,6 +1,7 @@
 import Article from '../models/Article.js'
 import { validationResult } from 'express-validator'
 import { getClientIP, canIncrementView } from '../utils/viewTracker.js'
+import { getFullImageUrl } from '../utils/imageUrl.js'
 
 // 获取文章列表
 export const getArticles = async (req, res) => {
@@ -50,9 +51,18 @@ export const getArticles = async (req, res) => {
     // 查询总数，用于分页
     const total = await Article.countDocuments(query)
 
+    // 处理文章中的封面图片URL
+    const articlesWithFullUrls = articles.map((article) => {
+      const articleObj = article.toObject ? article.toObject() : { ...article }
+      if (articleObj.coverImage) {
+        articleObj.coverImage = getFullImageUrl(req, articleObj.coverImage)
+      }
+      return articleObj
+    })
+
     // 返回结果
     res.json({
-      articles,
+      articles: articlesWithFullUrls,
       pagination: {
         page,
         limit,
@@ -95,7 +105,13 @@ export const getArticle = async (req, res) => {
       await article.save()
     }
 
-    res.json(article)
+    // 处理封面图片URL
+    const articleObj = article.toObject ? article.toObject() : { ...article }
+    if (articleObj.coverImage) {
+      articleObj.coverImage = getFullImageUrl(req, articleObj.coverImage)
+    }
+
+    res.json(articleObj)
   } catch (error) {
     res.status(500).json({ message: '服务器错误', error: error.message })
   }
@@ -138,7 +154,13 @@ export const createArticle = async (req, res) => {
     await article.populate('category', 'name')
     await article.populate('tags', 'name')
 
-    res.status(201).json(article)
+    // 处理封面图片URL
+    const articleObj = article.toObject ? article.toObject() : { ...article }
+    if (articleObj.coverImage) {
+      articleObj.coverImage = getFullImageUrl(req, articleObj.coverImage)
+    }
+
+    res.status(201).json(articleObj)
   } catch (error) {
     res.status(500).json({ message: '服务器错误', error: error.message })
   }
@@ -186,7 +208,13 @@ export const updateArticle = async (req, res) => {
     await article.populate('category', 'name')
     await article.populate('tags', 'name')
 
-    res.json(article)
+    // 处理封面图片URL
+    const articleObj = article.toObject ? article.toObject() : { ...article }
+    if (articleObj.coverImage) {
+      articleObj.coverImage = getFullImageUrl(req, articleObj.coverImage)
+    }
+
+    res.json(articleObj)
   } catch (error) {
     res.status(500).json({ message: '服务器错误', error: error.message })
   }
@@ -284,8 +312,10 @@ export const uploadPicture = (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: '请选择要上传的文件' })
     }
-    // 构造图片的 URL，相对于上传目录
-    const imageUrl = `/uploads/${req.file.filename}`
+    // 构造图片的相对路径
+    const relativePath = `/uploads/${req.file.filename}`
+    // 转换为完整URL
+    const imageUrl = getFullImageUrl(req, relativePath)
     res.json({
       message: '图片上传成功',
       url: imageUrl,
